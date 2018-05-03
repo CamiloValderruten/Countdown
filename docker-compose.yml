@@ -10,6 +10,8 @@ services:
         SERVICE_ENVIRONMENT: PRODUCTION
     links:
          - mongo:mongo
+    volumes:
+    - ./:/data
 
   mongo:
     container_name: "mongo"

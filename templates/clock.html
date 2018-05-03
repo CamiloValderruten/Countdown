@@ -37,7 +37,6 @@
 {% block body %}
     <div id="main" class="text-center mt-5">
         <div class="name">Countdown</div>
-        <span class="next text-muted"></span>
         <span class="clock">00:00:00</span>
         <div class="progress" style="height: 5rem; background-color: black;">
             <div class="progress-bar progress-bar-striped progress-bar-animated"
@@ -57,8 +56,8 @@
             timer = JSON.parse(timer);
             var duration = moment.duration(timer['seconds'], 'seconds').as('milliseconds');
             timer.name ? main.find('.name').text(timer.name) : null;
-            timer.category ? main.find('.category').text(timer.category) : null;
-            timer.nextName ? main.find('.next').text("Next: " + timer.nextName) : main.find('.next').text('');
+            {#timer.category ? main.find('.category').text(timer.category) : null;#}
+            {#timer.nextName ? main.find('.next').text("Next: " + timer.nextName) : main.find('.next').text('');#}
             main.find('.clock').text(moment.utc(duration).format('HH:mm:ss'));
             timer.hidden ? main.hide() : main.show();
             var percentage = timer.progress * 100;

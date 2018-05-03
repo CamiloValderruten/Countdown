@@ -1,5 +1,4 @@
 {% extends 'layout.html' %}
-{% set window_id = range(1, 9999999999) | random %}
 
 {% block style %}
     <link href="{{ url_for('static', filename='css/home.css') }}" rel="stylesheet">
@@ -10,7 +9,7 @@
     <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
         <h5 class="my-0 mr-md-auto font-weight-normal">Countdown</h5>
         <nav class="my-2 my-md-0 mr-md-3">
-            <a class="p-2 text-dark" target="_blank" href="{{ url_for('clock', window_id=window_id) }}">Clock</a>
+            <a class="p-2 text-dark" target="_blank" href="{{ url_for('clock') }}">Clock</a>
             <a class="p-2 text-dark" href="{{ url_for('logout') }}">Logout</a>
         </nav>
     </div>
@@ -112,7 +111,7 @@
                                             {% for timer in category.timers | sort(attribute='order') %}
                                                 <tr class="timer" id="{{ timer._id }}"
                                                     data-name="{{ timer.name }}"
-                                                    data-next="{{ 1 if timer.next else 0 }}"
+                                                    data-next="{{ 'true' if timer.next else 'false' }}"
                                                     data-seconds="{{ timer.seconds }}"
                                                     data-category="{{ category.name }}">
                                                     <td><i class="fa fa-bars handle"></i></td>
@@ -134,13 +133,6 @@
                                                             </button>
                                                         </a>
                                                     </td>
-                                                    {#                                            <td>#}
-                                                    {#                                                <a href="#" onclick='fillModal("{{ category._id }}", {{ timer }})'>#}
-                                                    {#                                                    <button class="btn btn-outline-primary btn-sm">#}
-                                                    {#                                                        <i class="fa fa-edit"></i>#}
-                                                    {#                                                    </button>#}
-                                                    {#                                                </a>#}
-                                                    {#                                            </td>#}
                                                     <td>
                                                         <a href="{{ url_for('delete_timer', category_id=category._id, timer_id=timer._id) }}">
                                                             <button class="btn btn-outline-danger btn-sm">
@@ -252,10 +244,43 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
     <script>
-        function fillModal(categoryId, timer) {
-            console.log(categoryId, timer);
-        }
+        var socketIO = io.connect('//' + document.domain + ':' + location.port);
+        setInterval(function () {
+            if (currentTimer) {
+                var nextTimer = currentTimer.parent().children()[currentTimer.index() + 1];
+                var clock = $(".clock");
+                var totalSeconds = currentTimer.attr('data-seconds');
+                var timer = {
+                    id: currentTimer.id,
+                    name: currentTimer.attr('data-name'),
+                    seconds: duration.asSeconds(),
+                    next: currentTimer.attr('data-next'),
+                    category: currentTimer.attr('data-category'),
+                    hidden: hidden,
+                    paused: paused,
+                    progress: (totalSeconds - duration.asSeconds()) / totalSeconds
+                };
 
+                clock.text(moment.utc(duration.as('milliseconds')).format('HH:mm:ss'));
+                if (paused) {
+                    $('#pause .fa-pause').removeClass('fa-pause').addClass('fa-play');
+                    $('.pulsate').removeClass('pulsate');
+                }
+                else {
+                    $('#pause .fa-play').removeClass('fa-play').addClass('fa-pause');
+                    if (duration.asSeconds()) {
+                        var second = moment.duration(1, 'seconds');
+                        duration.subtract(second);
+                    } else {
+                        $('.pulsate').removeClass('pulsate');
+                        paused = true;
+                        if (currentTimer.attr('data-next') && nextTimer) startTimer(nextTimer.id);
+                    }
+                }
+
+                socketIO.emit('timer', timer);
+            }
+        }, 1000);
 
         $('.timers tbody').sortable({
             axis: "y",
@@ -264,41 +289,5 @@
                 socketIO.emit('order_changed', $(this).sortable("toArray"));
             }
         });
-
-        var socketIO = io.connect('//' + document.domain + ':' + location.port);
-        setInterval(function () {
-            $(".clock").text(moment.utc(duration.as('milliseconds')).format('HH:mm:ss'));
-
-            if (currentTimer) {
-                var nextTimer = currentTimer.parent().children()[currentTimer.index() + 1];
-                var goToNext = currentTimer.attr('data-next') === "1";
-                if (paused) {
-                    $('#pause .fa-pause').removeClass('fa-pause').addClass('fa-play');
-                    $('.pulsate').removeClass('pulsate');
-                } else {
-                    $('#pause .fa-play').removeClass('fa-play').addClass('fa-pause');
-                    if (duration.asSeconds()) {
-                        var second = moment.duration(1, 'seconds');
-                        duration.subtract(second);
-                    } else {
-                        $('.pulsate').removeClass('pulsate');
-                        paused = true;
-                        if (goToNext && nextTimer) startTimer(nextTimer.id);
-                    }
-                }
-                var totalSeconds = currentTimer.attr('data-seconds');
-                var progress = (totalSeconds - duration.asSeconds()) / totalSeconds;
-                console.log(nextTimer && goToNext ? $(nextTimer).attr('data-name') : null);
-                var timer = {
-                    name: currentTimer.attr('data-name'),
-                    seconds: duration.asSeconds(),
-                    category: currentTimer.attr('data-category'),
-                    hidden: hidden,
-                    progress: progress,
-                    nextName: nextTimer && goToNext ? $(nextTimer).attr('data-name') : null
-                };
-                socketIO.emit('timer', timer);
-            }
-        }, 1000);
     </script>
 {% endblock %}

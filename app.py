@@ -5,6 +5,7 @@ from flask import session
 from flask import redirect
 
 from flask_socketio import SocketIO
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from pymongo import MongoClient
 from bson.json_util import dumps
@@ -39,7 +40,7 @@ def login():
     email = request.form.get('email').lower()
     password = request.form.get('password')
     user = db.users.find_one({"email": email})
-    if user and user['password'] == password:
+    if user and check_password_hash(user['password'], password):
         session['logged_in'] = True
     return redirect('/')
 
@@ -58,7 +59,7 @@ def setup():
 
         email = request.form.get('email').lower()
         password = request.form.get('password')
-        db.users.save({"email": email, "password": password})
+        db.users.save({"email": email, "password": generate_password_hash(password)})
         session['logged_in'] = True
     return redirect('/')
 
