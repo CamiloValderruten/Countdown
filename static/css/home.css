@@ -1,0 +1,15 @@
+.pulsate {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        background-color: rgba(40, 167, 69, 0.90);
+    }
+    50% {
+        background-color: #ffffff;
+    }
+    100% {
+        background-color: rgba(40, 167, 69, 0.90);
+    }
+}

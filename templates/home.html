@@ -1,0 +1,299 @@
+{% extends 'layout.html' %}
+{% set window_id = range(1, 9999999999) | random %}
+
+{% block style %}
+    <link href="{{ url_for('static', filename='css/home.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+    {# Navigation #}
+    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">Countdown</h5>
+        <nav class="my-2 my-md-0 mr-md-3">
+            <a class="p-2 text-dark" target="_blank" href="{{ url_for('clock', window_id=window_id) }}">Clock</a>
+            <a class="p-2 text-dark" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </div>
+
+    {# Main #}
+    <div class="container pt-4">
+        <div class="row">
+            {# Clock and Controls #}
+            <div class="col-md-10 mb-3">
+                <div class="btn-group btn-group-justified">
+                    <div class="btn-group" role="group">
+                        <button id="pause" class="btn btn-outline-info">
+                            <i class="fa fa-play"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button id="hide" class="btn btn-outline-info">
+                            <i class="fa fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button id="subtractMinute" class="btn btn-outline-info">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button id="addMinute" class="btn btn-outline-info">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-info btn-block" disabled>
+                            <i class="fa fa-clock-o"></i>
+                            <span class="clock">00:00:00</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 text-center">
+                <button class="btn btn-outline-primary btn-block" data-toggle="collapse" href="#create-category">
+                    Create Category
+                </button>
+            </div>
+        </div>
+
+        {# Categories #}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mt-4 text-center">
+                    {% for category in categories %}
+                        <div class="card mb-4 box-shadow category" id="{{ category._id }}">
+                            <div class="card-header">
+{#                                <div class="float-right">#}
+{#                                    <a href="#" onclick="">#}
+{#                                        <button class="btn btn-outline-success btn-sm">#}
+{#                                            <i class="fa fa-play"></i>#}
+{#                                        </button>#}
+{#                                    </a>#}
+{#                                </div>#}
+                                <h4 class="my-0 font-weight-normal">{{ category.name }}</h4>
+                                <small>{{ category.description }}</small>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                {% if category.timers | length > 0 %}
+                                    <div style="overflow-y: auto; max-height: 200px;">
+                                        <table class="table table-sm timers">
+                                            <thead>
+                                            <tr>
+                                                <th scope="col"></th>
+                                                <th style="width: 60%">Name</th>
+                                                <th scope="col">Start</th>
+                                                {#                                        <th scope="col">Edit</th>#}
+                                                <th scope="col">Delete</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for timer in category.timers | sort(attribute='order') %}
+                                                <tr class="timer" id="{{ timer._id }}"
+                                                    data-name="{{ timer.name }}"
+                                                    data-next="{{ 1 if timer.next else 0 }}"
+                                                    data-seconds="{{ timer.seconds }}"
+                                                    data-category="{{ category.name }}">
+                                                    <td><i class="fa fa-bars handle"></i></td>
+                                                    <td scope="row" style="font-weight: 100;">
+                                                <span class="ml-2 float-left">
+                                                    {{ timer.name }}
+                                                </span>
+                                                        {% if timer.next %}
+                                                            <div class="pull-right">
+                                                                <i class="fa fa-arrow-down"></i>
+                                                            </div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <a href="#">
+                                                            <button class="btn btn-outline-success btn-sm pause"
+                                                                    onclick="startTimer('{{ timer._id }}')">
+                                                                <i class="fa fa-play"></i>
+                                                            </button>
+                                                        </a>
+                                                    </td>
+                                                    {#                                            <td>#}
+                                                    {#                                                <a href="#" onclick='fillModal("{{ category._id }}", {{ timer }})'>#}
+                                                    {#                                                    <button class="btn btn-outline-primary btn-sm">#}
+                                                    {#                                                        <i class="fa fa-edit"></i>#}
+                                                    {#                                                    </button>#}
+                                                    {#                                                </a>#}
+                                                    {#                                            </td>#}
+                                                    <td>
+                                                        <a href="{{ url_for('delete_timer', category_id=category._id, timer_id=timer._id) }}">
+                                                            <button class="btn btn-outline-danger btn-sm">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <div class="my-3">
+                                        <small class="text-muted">No timers available in this category.</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="float-right">
+                                    <button class="btn btn-outline-primary" data-toggle="modal"
+                                            data-target="#createTimer-{{ category._id }}">Create Timer
+                                    </button>
+                                    <a href="{{ url_for('delete_category', _id=category._id) }}">
+                                        <button class="btn btn-outline-danger">Delete</button>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="card mb-4 box-shadow collapse" id="create-category">
+                        <div class="card-header">
+                            <h4 class="my-0 font-weight-normal">Create Category</h4>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{{ url_for('categories') }}">
+                                <div class="form-group">
+                                    <input type="text" name="name" placeholder="Name" class="form-control" required
+                                           maxlength="12">
+                                </div>
+                                <div class="form-group">
+                            <textarea name="description" rows="3" class="form-control"
+                                      placeholder="Description"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary btn-block">Create</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Modals #}
+    {% for category in categories %}
+        <div class="modal fade" id="createTimer-{{ category._id }}"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Create timer for {{ category.name }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="{{ url_for('timers', category_id=category._id) }}">
+                            <div class="form-group">
+                                <input type="text" name="name" placeholder="Name" class="form-control" required
+                                       maxlength="12">
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="hours" placeholder="Hours">
+                                    <input type="number" class="form-control" name="minutes" placeholder="Minutes">
+                                    <input type="number" class="form-control" name="seconds" placeholder="Seconds">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="checkbox" name="next"> Go to next timer after completion.
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary btn-block">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="modal fade" id="timer-modal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{{ url_for('timers', category_id=0) }}">
+                        <div class="form-group">
+                            <input type="text" name="name" placeholder="Name" class="form-control" required
+                                   maxlength="12">
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="hours" placeholder="Hours">
+                                <input type="number" class="form-control" name="minutes" placeholder="Minutes">
+                                <input type="number" class="form-control" name="seconds" placeholder="Seconds">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" name="next"> Go to next timer after completion.
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-block">Create</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+    <script>
+        function fillModal(categoryId, timer) {
+            console.log(categoryId, timer);
+        }
+
+
+        $('.timers tbody').sortable({
+            axis: "y",
+            handle: ".handle",
+            stop: function (event, ui) {
+                socketIO.emit('order_changed', $(this).sortable("toArray"));
+            }
+        });
+
+        var socketIO = io.connect('//' + document.domain + ':' + location.port);
+        setInterval(function () {
+            $(".clock").text(moment.utc(duration.as('milliseconds')).format('HH:mm:ss'));
+
+            if (paused) {
+                $('#pause .fa-pause').removeClass('fa-pause').addClass('fa-play');
+                $('.pulsate').removeClass('pulsate');
+            } else {
+                $('#pause .fa-play').removeClass('fa-play').addClass('fa-pause');
+                if (duration.asSeconds()) {
+                    var second = moment.duration(1, 'seconds');
+                    duration.subtract(second);
+                } else {
+                    $('.pulsate').removeClass('pulsate');
+                    paused = true;
+                    if (currentTimer && currentTimer.attr('data-next') === "1") {
+                        var next = currentTimer.parent().children()[currentTimer.index() + 1];
+                        if (next) startTimer(next.id);
+                    }
+                }
+            }
+
+            if (currentTimer) {
+                var totalSeconds = currentTimer.attr('data-seconds');
+                var progress = (totalSeconds - duration.asSeconds()) / totalSeconds;
+                var timer = {
+                    name: currentTimer.attr('data-name'),
+                    seconds: duration.asSeconds(),
+                    category: currentTimer.attr('data-category'),
+                    hidden: hidden,
+                    progress: progress
+                };
+                socketIO.emit('timer', timer);
+            }
+        }, 1000);
+    </script>
+{% endblock %}

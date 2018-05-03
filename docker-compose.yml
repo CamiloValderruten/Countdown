@@ -1,0 +1,21 @@
+version: '2'
+services:
+  countdown:
+    restart: always
+    container_name: "countdown"
+    build: "."
+    ports:
+        - "7000:5000"
+    environment:
+        SERVICE_ENVIRONMENT: PRODUCTION
+    links:
+         - mongo:mongo
+
+  mongo:
+    container_name: "mongo"
+    image: "mongo:latest"
+    volumes:
+    - ./data:/data/db/
+
+volumes:
+    mongo:
