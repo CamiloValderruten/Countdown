@@ -25,9 +25,10 @@
         .name {
             font-size: 100px;
             font-weight: lighter;
+            padding-bottom: 0!important;
         }
 
-        .category {
+        .next {
             font-size: 30px;
         }
     </style>
@@ -36,9 +37,9 @@
 {% block body %}
     <div id="main" class="text-center mt-5">
         <div class="name">Countdown</div>
-        <div class="category text-muted">Category</div>
+        <span class="next text-muted"></span>
         <span class="clock">00:00:00</span>
-        <div class="progress" style="height: 3rem;">
+        <div class="progress" style="height: 5rem; background-color: black;">
             <div class="progress-bar progress-bar-striped progress-bar-animated"
                  style="width: 0" aria-valuenow="100" aria-valuemin="0"
                  aria-valuemax="100"></div>
@@ -57,6 +58,7 @@
             var duration = moment.duration(timer['seconds'], 'seconds').as('milliseconds');
             timer.name ? main.find('.name').text(timer.name) : null;
             timer.category ? main.find('.category').text(timer.category) : null;
+            timer.nextName ? main.find('.next').text("Next: " + timer.nextName) : main.find('.next').text('');
             main.find('.clock').text(moment.utc(duration).format('HH:mm:ss'));
             timer.hidden ? main.hide() : main.show();
             var percentage = timer.progress * 100;

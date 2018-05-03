@@ -60,16 +60,38 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="mt-4 text-center">
+
+                    {# Create Category Card #}
+                    <div class="card mb-4 box-shadow collapse" id="create-category">
+                        <div class="card-header">
+                            <h4 class="my-0 font-weight-normal">Create Category</h4>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{{ url_for('categories') }}">
+                                <div class="form-group">
+                                    <input type="text" name="name" placeholder="Name" class="form-control" required
+                                           maxlength="12">
+                                </div>
+                                <div class="form-group">
+                            <textarea name="description" rows="3" class="form-control"
+                                      placeholder="Description"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary btn-block">Create</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    {# Category Cards #}
                     {% for category in categories %}
                         <div class="card mb-4 box-shadow category" id="{{ category._id }}">
                             <div class="card-header">
-{#                                <div class="float-right">#}
-{#                                    <a href="#" onclick="">#}
-{#                                        <button class="btn btn-outline-success btn-sm">#}
-{#                                            <i class="fa fa-play"></i>#}
-{#                                        </button>#}
-{#                                    </a>#}
-{#                                </div>#}
+                                {#                                <div class="float-right">#}
+                                {#                                    <a href="#" onclick="">#}
+                                {#                                        <button class="btn btn-outline-success btn-sm">#}
+                                {#                                            <i class="fa fa-play"></i>#}
+                                {#                                        </button>#}
+                                {#                                    </a>#}
+                                {#                                </div>#}
                                 <h4 class="my-0 font-weight-normal">{{ category.name }}</h4>
                                 <small>{{ category.description }}</small>
                             </div>
@@ -149,24 +171,7 @@
                             </div>
                         </div>
                     {% endfor %}
-                    <div class="card mb-4 box-shadow collapse" id="create-category">
-                        <div class="card-header">
-                            <h4 class="my-0 font-weight-normal">Create Category</h4>
-                        </div>
-                        <div class="card-body">
-                            <form method="post" action="{{ url_for('categories') }}">
-                                <div class="form-group">
-                                    <input type="text" name="name" placeholder="Name" class="form-control" required
-                                           maxlength="12">
-                                </div>
-                                <div class="form-group">
-                            <textarea name="description" rows="3" class="form-control"
-                                      placeholder="Description"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-outline-primary btn-block">Create</button>
-                            </form>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -264,33 +269,33 @@
         setInterval(function () {
             $(".clock").text(moment.utc(duration.as('milliseconds')).format('HH:mm:ss'));
 
-            if (paused) {
-                $('#pause .fa-pause').removeClass('fa-pause').addClass('fa-play');
-                $('.pulsate').removeClass('pulsate');
-            } else {
-                $('#pause .fa-play').removeClass('fa-play').addClass('fa-pause');
-                if (duration.asSeconds()) {
-                    var second = moment.duration(1, 'seconds');
-                    duration.subtract(second);
-                } else {
+            if (currentTimer) {
+                var nextTimer = currentTimer.parent().children()[currentTimer.index() + 1];
+                var goToNext = currentTimer.attr('data-next') === "1";
+                if (paused) {
+                    $('#pause .fa-pause').removeClass('fa-pause').addClass('fa-play');
                     $('.pulsate').removeClass('pulsate');
-                    paused = true;
-                    if (currentTimer && currentTimer.attr('data-next') === "1") {
-                        var next = currentTimer.parent().children()[currentTimer.index() + 1];
-                        if (next) startTimer(next.id);
+                } else {
+                    $('#pause .fa-play').removeClass('fa-play').addClass('fa-pause');
+                    if (duration.asSeconds()) {
+                        var second = moment.duration(1, 'seconds');
+                        duration.subtract(second);
+                    } else {
+                        $('.pulsate').removeClass('pulsate');
+                        paused = true;
+                        if (goToNext && nextTimer) startTimer(nextTimer.id);
                     }
                 }
-            }
-
-            if (currentTimer) {
                 var totalSeconds = currentTimer.attr('data-seconds');
                 var progress = (totalSeconds - duration.asSeconds()) / totalSeconds;
+                console.log(nextTimer && goToNext ? $(nextTimer).attr('data-name') : null);
                 var timer = {
                     name: currentTimer.attr('data-name'),
                     seconds: duration.asSeconds(),
                     category: currentTimer.attr('data-category'),
                     hidden: hidden,
-                    progress: progress
+                    progress: progress,
+                    nextName: nextTimer && goToNext ? $(nextTimer).attr('data-name') : null
                 };
                 socketIO.emit('timer', timer);
             }
