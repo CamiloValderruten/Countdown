@@ -92,9 +92,9 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="float-md-right">
+                                        <div class="float-md-right controls">
                                             <div class="btn-group btn-group-justified">
-                                                <div class="btn-group" role="group">
+                                                <div class="btn-group play" onclick="startCategory('{{ category._id }}');">
                                                     <button class="btn btn-outline-success">
                                                         <i class="fa fa-play"></i>
                                                     </button>
@@ -252,6 +252,16 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
     <script>
+
+        function startCategory(id){
+           $("#" + id).find('.timer').each(function(index, timer){
+               if (index === 0){
+                   console.log(timer.id);
+                   startTimer(timer.id);
+               }
+           });
+        }
+
         $(".timer").each(function (index, timer) {
             timer = $(timer);
             var timerDuration = moment.duration(parseInt(timer.attr('data-seconds')), 'second');

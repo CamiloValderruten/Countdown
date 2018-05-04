@@ -51,4 +51,6 @@ function startTimer(timerId) {
     paused = false;
     $('.pulsate').removeClass('pulsate');
     currentTimer.find('button.pause').addClass('pulsate');
+    var category = currentTimer.closest('.category');
+    category.find('.play button').addClass('pulsate');
 }
